@@ -1,0 +1,63 @@
+run:
+  task: 'DatasetTrainTaskWithCustomModel'
+  runner: 'ReadCLIPTrainer'
+  seed: 2025
+  training_weight: 0.1
+  text_weight: 0.5
+  use_negative_in_text_contrastive: False
+  save_decoder: False
+  
+collator:
+  collator_cls: 'COCOImageCollatorWithT5Tokenizer'
+  config:
+    use_negative_caption: True
+    use_different_label: True
+    use_text_loss: True
+    num_hard_negs: 3
+    num_labels: 1
+    max_length: 77
+    use_synthetic_caption: True
+    synthetic_type: 'zero'
+
+model:
+  model_cls: 'CLIPWithDecoderModel'
+  config_cls: 'CLIPWithDecoderConfig'
+  config:
+    pretrained_model_name_or_path: &pretrained_model_name_or_path 'openai/clip-vit-base-patch32'
+    decoder_pretrained_model_name_or_path: &decoder_pretrained_model_name_or_path 'google/t5-v1_1-large'
+    use_decoder: True
+  lora:
+
+processor:
+  processor_cls: "CLIPProcessor"
+  config:
+    pretrained_model_name_or_path: 'openai/clip-vit-base-patch32'
+
+dataset:
+  COCOCaptionsWithImageDatasetBuilder:
+    split: 'train'
+
+trainer:
+  output_dir: './output/READ-CLIP'
+  run_name: &model_id 'YOUR-NAME/READ-CLIP'
+  learning_rate: &learning_rate 1.0e-5
+  lr_scheduler_type: 'cosine'
+  warmup_steps: &warmup_steps 50
+  weight_decay: &weight_decay 1.0e-1
+  num_train_epochs : &num_train_epoch 5
+  save_strategy: 'epoch'
+  logging_steps : 1
+  eval_strategy: 'no' # 'steps', 'epochs', 'no'
+  save_total_limit: 1
+  per_device_train_batch_size : &per_device_batch_size 256
+  gradient_accumulation_steps: &gradient_accumulation 1
+  gradient_checkpointing : True
+  gradient_checkpointing_kwargs:
+    use_reentrant: False
+  ddp_find_unused_parameters: False
+  group_by_length : False # Whether to order the sample by token length.
+  use_cpu : False
+  remove_unused_columns : False
+  fp16: &fp16 False # use torch.float16
+  bf16: &bf16 True # Use torch.bfloat16
+  dataloader_num_workers: 8

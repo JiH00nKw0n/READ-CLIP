@@ -1,0 +1,27 @@
+run:
+  task: 'MultiDatasetEvaluateTaskWithPretrainedModel'
+  seed: 2024
+  output_dir: &output_dir './result/READ-CLIP'
+  base_config:
+    collator:
+      collator_cls: 'ImageCollator'
+      config:
+        max_length: 77
+    output_dir: *output_dir
+
+model:
+  model_cls: 'CLIPModel'
+  config:
+    pretrained_model_name_or_path: 'Mayfull/READ-CLIP'
+
+processor:
+  processor_cls: "CLIPProcessor"
+  config:
+    pretrained_model_name_or_path: 'openai/clip-vit-base-patch32'
+
+evaluator:
+  - "CrepeEvaluator"
+  - "ValseEvaluator"
+  - "WhatsUpEvaluator"
+  - "SugarCrepeEvaluator"
+  - "SugarCrepePPEvaluator"
