@@ -1,14 +1,16 @@
 #!/bin/bash
 
-# This script simplifies running READ-CLIP with Docker
+# This script automates building and running READ-CLIP Docker with train/eval/shell modes
+
+set -e
 
 # Default values
-GPU_FLAG="all"
 MODE="shell"
 CONFIG_PATH=""
 WANDB_KEY=""
+GPU_FLAG="all"
 
-# Parse command line arguments
+# Argument parsing
 while (( "$#" )); do
   case "$1" in
     --train)
@@ -32,71 +34,69 @@ while (( "$#" )); do
       shift 2
       ;;
     --help)
-      echo "Usage: ./script/run_docker.sh [OPTIONS]"
+      echo "Usage: bash run_docker.sh [OPTIONS]"
       echo ""
       echo "Options:"
       echo "  --train                Run training mode"
       echo "  --eval                 Run evaluation mode"
       echo "  --config PATH          Path to configuration file"
       echo "  --wandb-key KEY        Weights & Biases API key"
-      echo "  --gpu NUM              GPU device number (default: all)"
+      echo "  --gpu DEVICES          GPU device(s) to use (default: all, e.g. 0,1)"
       echo "  --help                 Show this help message"
       exit 0
       ;;
     *)
-      echo "Unknown parameter: $1"
+      echo "[ERROR] Unknown parameter: $1"
       echo "Use --help for usage information"
       exit 1
       ;;
   esac
 done
 
-# Create necessary directories
-mkdir -p data
-mkdir -p output
-mkdir -p logs
+REPO_DIR=$(pwd)
+IMAGE_NAME="read-clip"
+CONTAINER_NAME="read-clip-run"
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
-    echo "Docker could not be found. Please install Docker and try again."
+    echo "[ERROR] Docker is not installed. Please install Docker and try again."
     exit 1
 fi
 
-# Check if image exists, build if not
-if [[ "$(docker images -q read-clip 2> /dev/null)" == "" ]]; then
-    echo "Building READ-CLIP Docker image..."
-    docker build -t read-clip .
+# Build Docker image if not present
+if [[ "$(docker images -q $IMAGE_NAME 2> /dev/null)" == "" ]]; then
+    echo "[INFO] Building Docker image ($IMAGE_NAME)..."
+    docker build -t $IMAGE_NAME .
 fi
 
-# Define command based on mode
+# Remove existing container if present
+if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
+    echo "[INFO] Removing existing container ($CONTAINER_NAME)..."
+    docker rm -f $CONTAINER_NAME
+fi
+
+# Prepare data/output/logs folders for volume mapping
+mkdir -p data output logs
+
+# Determine which command to run in container
 if [[ "$MODE" == "train" ]]; then
-    if [[ -z "$CONFIG_PATH" ]]; then
-        CONFIG_PATH="config/train_read_clip.yaml"
-    fi
-    
-    CMD="python train.py --cfg-path $CONFIG_PATH"
-    
-    if [[ ! -z "$WANDB_KEY" ]]; then
-        CMD="$CMD --wandb-key $WANDB_KEY"
-    fi
-    
+    [ -z "$CONFIG_PATH" ] && CONFIG_PATH="config/train_read_clip.yaml"
+    DOCKER_CMD="source /venv/bin/activate && bash setup.sh && chmod +x scripts/train.sh && python train.py --cfg-path $CONFIG_PATH"
+    [ ! -z "$WANDB_KEY" ] && DOCKER_CMD="$DOCKER_CMD --wandb-key $WANDB_KEY"
 elif [[ "$MODE" == "eval" ]]; then
-    if [[ -z "$CONFIG_PATH" ]]; then
-        CONFIG_PATH="config/eval_read_clip.yaml"
-    fi
-    
-    CMD="python evaluate.py --cfg-path $CONFIG_PATH"
-    
+    [ -z "$CONFIG_PATH" ] && CONFIG_PATH="config/eval_read_clip.yaml"
+    DOCKER_CMD="source /venv/bin/activate && bash setup.sh && python evaluate.py --cfg-path $CONFIG_PATH"
 else
-    CMD="bash"
+    DOCKER_CMD="bash"
 fi
 
-# Run Docker container
-echo "Running READ-CLIP in Docker..."
-docker run --gpus \"device=$GPU_FLAG\" -it \
-    -v "$(pwd)/data:/app/data" \
-    -v "$(pwd)/output:/app/output" \
-    -v "$(pwd)/logs:/app/logs" \
-    read-clip $CMD
+echo "[INFO] Running READ-CLIP Docker ($MODE mode)..."
+docker run --gpus "device=$GPU_FLAG" -it \
+    --name $CONTAINER_NAME \
+    -v "$REPO_DIR/data:/app/data" \
+    -v "$REPO_DIR/output:/app/output" \
+    -v "$REPO_DIR/logs:/app/logs" \
+    $IMAGE_NAME \
+    bash -c "$DOCKER_CMD"
 
-echo "Done!" 
+echo "[INFO] Done!"

@@ -17,18 +17,18 @@ such as NegCLIP and FSC-CLIP by up to **4.5 pp**.
 
 ## Table of Contents
 
-1. [Quick Start](#quick-start)
-2. [Installation](#installation)
-3. [Training](#training)
-4. [Evaluation & Results](#evaluation--results)
-5. [Pre-trained Checkpoints](#pre-trained-checkpoints)
-6. [Reproducing the Paper](#reproducing-the-paper)
+1. [Quick Start](#quick-start-sample-inference)
+2. [Installation & Usage (Docker Recommended)](#installation--usage-docker-recommended)
+3. [Training](#advanced-entering-a-shell-inside-docker)
+4. [Experiments & Results](#experiments--results)
+5. [Reproducing the Paper](#reproducing-the-paper)
+6. [Pre-trained Checkpoints](#pre-trained-checkpoints)
 7. [Expected Compute & Determinism](#expected-compute--determinism)
 8. [License](#license)
 
 ---
 
-## Quick Start
+## Quick Start [Sample Inference]
 
 ```bash
 # 1. create env (Python ≥3.8, PyTorch ≥2.1)
@@ -36,50 +36,78 @@ conda create -n readclip python=3.10 -y && conda activate readclip
 pip install -r requirements.txt
 
 # 3. run zero-shot inference
-python inference.py   --model-path checkpoints/read-clip_vitb32.pt   --image-path examples/cat_monitor.jpg
+python example.py
 ```
 
 ---
 
-## Installation
+## Installation & Usage (Docker Recommended)
+
+Everything can be run in Docker — no Python installation or CUDA drivers on the host required (except for the NVIDIA
+driver).
 
 <details>
-<summary><strong>Option A · Pip / Conda (recommended)</strong></summary>
-
-```bash
-bash setup.sh         # installs package in editable mode
-```
-
-</details>
-
-<details>
-<summary><strong>Option B · Docker</strong></summary>
+<summary><strong>Step 1. Build the Docker image</strong></summary>
 
 ```bash
 docker build -t read-clip .
-docker run --gpus all -it read-clip
 ```
 
 </details>
 
 <details>
-<summary><strong>Option C · Docker Compose (one-liner)</strong></summary>
+<summary><strong>Step 2. Training</strong></summary>
 
 ```bash
-docker compose up -d         # start
-docker compose exec read-clip bash
-docker compose down          # stop & remove
+bash run_docker.sh --train --wandb-key YOUR-WANDB-KEY
+```
+
+- All necessary data, output, and logs directories will be mounted for persistence.
+- `YOUR-WANDB-KEY` is optional; if omitted, W&B logging will be disabled.
+
+</details>
+
+<details>
+<summary><strong>Step 3. Evaluation</strong></summary>
+
+```bash
+bash run_docker.sh --eval
 ```
 
 </details>
 
 ---
 
-## Training
+### Advanced: Entering a Shell Inside Docker
+
+If you want to run custom scripts or debug:
 
 ```bash
-python train.py   --cfg-path config/train_read_clip.yaml   --wandb-key <YOUR_WANDB_KEY>        # optional
+bash run_docker.sh
 ```
+
+Then, inside the container:
+
+```bash
+source /venv/bin/activate
+bash setup.sh
+# Now you can run anything, e.g.
+python train.py --cfg-path config/train_read_clip.yaml
+```
+
+---
+
+> **Tip:**  
+> For convenient mode switching (`train`/`eval`/`shell`), use the provided [run_docker.sh](./run_docker.sh) launcher:
+> ```bash
+> bash run_docker.sh --train --wandb-key YOUR-WANDB-KEY      # for training
+> bash run_docker.sh --eval                                  # for evaluation
+> bash run_docker.sh                                         # just get a shell
+> ```
+
+---
+
+## Experiments & Results
 
 Key hyper-parameters (defined in the YAML):
 
@@ -91,12 +119,15 @@ Key hyper-parameters (defined in the YAML):
 | `batch_size`       | `256`  | global |
 | `bf16`             | `true` | A100   |
 
----
 
-## Evaluation & Results
+## Reproducing the Paper
+
+> ```bash
+> bash run_docker.sh --train --wandb-key YOUR-WANDB-KEY      # for training
+> ```
 
 ```bash
-python evaluate.py --cfg-path config/eval_read_clip.yaml
+> bash run_docker.sh --eval
 ```
 
 | Benchmark          | Metric | READ-CLIP | NegCLIP | FSC-CLIP |
@@ -118,16 +149,6 @@ Numbers reproduce Table 1 in the paper.
 | model              | link                                                    |
 |--------------------|---------------------------------------------------------|
 | READ-CLIP ViT-B/32 | [Checkpoint](https://huggingface.co/Mayfull/READ-CLIP). |
-
----
-
-## Reproducing the Paper
-
-```bash
-bash scripts/eval.sh
-```
-
-Full scripts for every table and figure live in **`scripts/`**.
 
 ---
 

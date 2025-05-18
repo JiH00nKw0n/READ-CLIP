@@ -1,38 +1,42 @@
-FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu20.04
 
 WORKDIR /app
 
-# 기본 패키지 설치
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y \
-    wget \
-    git \
-    unzip \
-    vim \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -yq --no-install-recommends \
+        wget \
+        git \
+        unzip \
+        vim \
+        python3.10 \
+        python3.10-dev \
+        python3.10-venv \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 프로젝트 파일 복사
+# Create and activate Python 3.10 venv
+RUN python3.10 -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+
+# Upgrade pip and install PyTorch with CUDA 12.1 support
+RUN pip install --upgrade pip
+RUN pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
+
+# Copy project files
 COPY . /app/
 
-# setup.sh 실행 권한 부여
-RUN chmod +x setup.sh
+# Make setup.sh executable (if exists)
+RUN chmod +x setup.sh || true
 
-# 요구 사항 설치
-RUN pip install --upgrade pip && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117 && \
-    pip install -r requirements.txt && \
-    python -m spacy download en_core_web_sm
+# Install requirements
+RUN pip install -r requirements.txt
+RUN python -m spacy download en_core_web_sm
 
-# 기본 디렉토리 생성
+# Create required directories
 RUN mkdir -p /app/output/READ-CLIP /app/logs /app/data
 
-# 필요시 환경 변수 설정
+# Environment variables
 ENV LOG_DIR=/app/logs
 ENV PYTHONPATH=/app:$PYTHONPATH
 
-# 작업 디렉토리 설정
 WORKDIR /app
-
-# 기본 진입점 설정
-CMD ["bash"] 
