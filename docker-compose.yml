@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  read-clip:
+    build: .
+    image: read-clip
+    container_name: read-clip
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    tty: true
+    stdin_open: true
+    command: bash 
