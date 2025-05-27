@@ -30,7 +30,6 @@ class SugarCrepeBuilder(BaseBuilder):
             path="Mayfull/sugarcrepe_vlms",
             trust_remote_code=True,
             split=self.split,
-            token=str(os.getenv("HF_TOKEN"))
         )
 
         return dataset
@@ -59,7 +58,6 @@ class SugarCrepePPBuilder(BaseBuilder):
             path="Mayfull/sugarcrepepp_vlms",
             trust_remote_code=True,
             split=self.split,
-            token=str(os.getenv("HF_TOKEN"))
         )
 
         return dataset

@@ -38,7 +38,7 @@ if is_apex_available():
 __all__ = [
     "RandomSamplerTrainer",
     "NegCLIPRandomSamplerTrainer",
-    "NegCLIPRandomSamplerWithMultiLossTrainer"
+    "ReadCLIPTrainer"
 ]
 
 logger = logging.getLogger(__name__)
@@ -182,8 +182,8 @@ class NegCLIPRandomSamplerTrainer(RandomSamplerTrainer):
         return (loss, outputs) if return_outputs else loss
 
 
-@registry.register_trainer('NegCLIPRandomSamplerWithMultiLossTrainer')
-class NegCLIPRandomSamplerWithMultiLossTrainer(MultiLossMixin, RandomSamplerTrainer):
+@registry.register_trainer('ReadCLIPTrainer')
+class ReadCLIPTrainer(MultiLossMixin, RandomSamplerTrainer):
     """
     Trainer that combines negative CLIP loss, multiple losses (LM + Contrastive),
     and logs token-level probabilities for positive/negative contexts.

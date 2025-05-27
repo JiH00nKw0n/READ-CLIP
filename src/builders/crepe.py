@@ -30,7 +30,6 @@ class CrepeBuilder(BaseBuilder):
             path="Mayfull/crepe_vlms",
             trust_remote_code=True,
             split=self.split,
-            token=str(os.getenv("HF_TOKEN"))
         )
 
         return dataset

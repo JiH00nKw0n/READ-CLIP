@@ -1,4 +1,5 @@
 from .base import BaseBuilder
+from .coco import COCOCaptionsDatasetBuilder, COCOCaptionsWithImageDatasetBuilder
 from .crepe import CrepeBuilder
 from .sugarcrepe import SugarCrepeBuilder
 from .valse import ValseBuilder
@@ -10,4 +11,6 @@ __all__ = [
     "SugarCrepeBuilder",
     "ValseBuilder",
     "WhatsUpBuilder",
+    "COCOCaptionsDatasetBuilder",
+    "COCOCaptionsWithImageDatasetBuilder"
 ]

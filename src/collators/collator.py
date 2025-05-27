@@ -1,16 +1,16 @@
 import json
-import json
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Dict, Optional, Any
 
 import torch
-from PIL import Image
-from src.common.mixin import NegCLIPNegativeTextMining
-from transformers import BatchEncoding
+from PIL.Image import Image
+from transformers import BatchEncoding, AutoTokenizer
 from transformers.utils import add_end_docstrings
 from transformers.utils import logging
 
+from src.common.mixin import NegCLIPNegativeTextMining
 from src.common.registry import registry
 from .base import BaseCollator, BASE_COLLATOR_DOCSTRING
 
@@ -128,7 +128,7 @@ class ImageCollator(BaseCollator):
 
 @add_end_docstrings(BASE_COLLATOR_DOCSTRING)
 @dataclass
-@registry.register_collator('COCONegCLIPImageCollatorWithTokenizer')
+@registry.register_collator('COCOImageCollatorWithT5Tokenizer')
 class COCOImageCollatorWithT5Tokenizer(BaseCollator, NegCLIPNegativeTextMining):
     tokenizer: Optional[str] = None
     num_hard_negs: Optional[int] = 0
@@ -141,7 +141,9 @@ class COCOImageCollatorWithT5Tokenizer(BaseCollator, NegCLIPNegativeTextMining):
     synthetic_data: Optional[Dict] = None
 
     def __post_init__(self):
-        from transformers import AutoTokenizer
+
+        script_dir = Path(__file__).resolve().parent
+        filepath = script_dir.parents[2] / "data" / f"{self.synthetic_type}.json"
 
         if self.tokenizer is None:
             self.tokenizer = AutoTokenizer.from_pretrained('google/flan-t5-xl')
@@ -152,11 +154,11 @@ class COCOImageCollatorWithT5Tokenizer(BaseCollator, NegCLIPNegativeTextMining):
         self.synthetic_data = {}
         if (self.synthetic_type is not None
                 and self.synthetic_type != 'None'
-                and os.path.isfile(f"./data/{self.synthetic_type}.json")
+                and os.path.isfile(filepath)
         ):
             data = {}
-            logger.info(f"Paraphrased label loaded: ./data/{self.synthetic_type}.json")
-            with open(f"./data/{self.synthetic_type}.json", "r", encoding="utf-8") as f:
+            logger.info(f"Paraphrased label loaded: {filepath}")
+            with open(filepath, "r", encoding="utf-8") as f:
                 data.update(json.load(f))
             self.synthetic_data = data
 

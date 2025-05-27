@@ -31,14 +31,11 @@ class BaseConfig:
             Returns the model configuration as an `OmegaConf` object.
         processor_config (DictConfig):
             Returns the processor configuration as an `OmegaConf` object.
-        dataset_config (Dict):
-            Returns the dataset configuration as a Python dictionary.
         run_config (DictConfig):
             Returns the run configuration as an `OmegaConf` object.
     """
     model: Dict
     processor: Dict
-    dataset: Dict
     run: Dict
 
     @property
@@ -48,10 +45,6 @@ class BaseConfig:
     @property
     def processor_config(self) -> DictConfig:
         return OmegaConf.create(self.processor)
-
-    @property
-    def dataset_config(self) -> Dict:
-        return self.dataset
 
     @property
     def run_config(self) -> DictConfig:
@@ -72,15 +65,20 @@ class TrainConfig(BaseConfig):
             Dictionary containing trainer configuration settings.
         collator (Dict):
             Dictionary containing collator configuration settings.
+        dataset (Dict):
+            Dictionary containing dataset configuration settings.
 
     Properties:
         trainer_config (Dict):
             Returns the trainer configuration as a dictionary.
         collator_config (DictConfig):
             Returns the collator configuration as an `OmegaConf` object.
+        dataset_config (Dict):
+            Returns the dataset configuration as a Python dictionary.
     """
     collator: Dict
     trainer: Dict
+    dataset: Dict
 
     @property
     def trainer_config(self) -> Dict:
@@ -89,6 +87,10 @@ class TrainConfig(BaseConfig):
     @property
     def collator_config(self) -> DictConfig:
         return OmegaConf.create(self.collator)
+
+    @property
+    def dataset_config(self) -> Dict:
+        return self.dataset
 
 
 @dataclass(

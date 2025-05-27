@@ -30,7 +30,6 @@ class ValseBuilder(BaseBuilder):
             path="Mayfull/valse_vlms",
             trust_remote_code=True,
             split=self.split,
-            token=str(os.getenv("HF_TOKEN"))
         )
 
         return dataset

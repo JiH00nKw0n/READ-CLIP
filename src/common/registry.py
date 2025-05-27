@@ -249,7 +249,7 @@ class Registry:
         """
 
         def wrap(builder_cls) -> BuilderType:
-            from src.datasets.base import BaseBuilder
+            from src.builders.base import BaseBuilder
 
             assert issubclass(
                 builder_cls, BaseBuilder

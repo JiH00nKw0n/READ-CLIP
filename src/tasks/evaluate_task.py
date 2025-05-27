@@ -1,18 +1,16 @@
 import logging
 from typing import Optional, Dict, Type, List
 
-from datasets import Dataset, DatasetDict
 from omegaconf import DictConfig, OmegaConf
 from pydantic import BaseModel, ConfigDict, Field
 from transformers import add_end_docstrings, PreTrainedModel, ProcessorMixin
 
+from src.builders import BaseBuilder
 from src.common import registry, experimental
-from src.datasets import BaseBuilder
 from src.runners import BaseEvaluator
 from src.tasks.base import (
     TaskWithPretrainedModel, TaskWithCustomModel, EVALUATE_TASK_DOCSTRING, BaseEvaluateTask
 )
-from src.utils import load_json
 
 __all__ = [
     "MultiDatasetEvaluateTask",
@@ -40,7 +38,7 @@ class EvaluatorContainer(BaseModel):
         container (Optional[List[EvaluatorType]]): A list of evaluators to be added to the container.
 
     Methods:
-        evaluate(batch_size):
+        evaluate():
             Runs the evaluation for all the evaluators in the container.
 
         add(evaluator):
@@ -51,7 +49,7 @@ class EvaluatorContainer(BaseModel):
 
     model_config = ConfigDict(frozen=False, strict=False, validate_assignment=False)
 
-    def evaluate(self, batch_size: Optional[int] = 128):
+    def evaluate(self):
         """
         Runs the evaluation process for each evaluator in the container.
 
@@ -60,7 +58,7 @@ class EvaluatorContainer(BaseModel):
         """
         for evaluator in self.container:
             if issubclass(type(evaluator), BaseEvaluator):
-                evaluator.evaluate(batch_size=batch_size)
+                evaluator.evaluate()
 
     def add(self, evaluator: EvaluatorType):
         """
@@ -82,88 +80,38 @@ class MultiDatasetEvaluateTask(BaseEvaluateTask):
     It provides methods for building datasets and evaluators, and executes multiple evaluation tasks on the model.
     """
 
-    def build_datasets(
-            self,
-            dataset_config: Optional[Dict] = None
-    ) -> Dict[str, BuilderType]:
-        """
-        Builds the datasets based on the provided configuration. The datasets are stored as builders keyed by their names.
-
-        Args:
-            dataset_config (Optional[Dict]): The dataset configuration.
-            If not provided, defaults to `self.config.dataset_config`.
-
-        Returns:
-            Dict[str, BuilderType]: A dictionary containing dataset builders keyed by dataset name.
-        """
-        dataset_config = dataset_config if dataset_config is not None else self.config.dataset_config
-
-        builder_dict = {}
-        assert len(dataset_config) > 0, "At least one dataset must be specified."
-
-        for dataset_line in dataset_config:
-            builder_cls_name, config = next(iter(dataset_line.items()))
-            builder = registry.get_builder_class(builder_cls_name)(**config)
-            builder_dict[builder_cls_name] = builder
-
-        return builder_dict
-
-    def build_evaluator(
-            self,
-            evaluator_config: Optional[DictConfig] = None
-    ) -> EvaluatorContainer:
-        """
-        Builds and initializes the evaluators using the provided configuration. The evaluators are added to an
-        `EvaluatorContainer` and evaluated on the corresponding datasets.
-
-        Args:
-            evaluator_config (Optional[DictConfig]): The evaluator configuration.
-            If not provided, defaults to `self.config.evaluator_config`.
-
-        Returns:
-            EvaluatorContainer: A container holding multiple evaluators that can run evaluations for the model.
-        """
-        evaluator_config = evaluator_config if evaluator_config is not None else self.config.evaluator_config
-        dataset_dict = self.build_datasets()
+    def build_evaluator(self, evaluator_config: Optional[DictConfig] = None) -> EvaluatorContainer:
+        evaluator_config = evaluator_config or self.config.evaluator_config
 
         container = EvaluatorContainer()
         model = self.build_model()
         processor = self.build_processor()
 
-        for evaluator_line, (builder_cls_name, builder) in zip(
-                evaluator_config,
-                dataset_dict.items()
-        ):
+        base_config = self.config.run_config.base_config
 
-            evaluator_cls_name, config = next(iter(evaluator_line.items()))
-            evaluator_cls = registry.get_evaluator_class(evaluator_cls_name)
-            assert evaluator_cls is not None, f"Evaluator {evaluator_cls_name} not properly registered."
+        collator_config = OmegaConf.create(base_config.pop('collator'))
+        collator_cls = registry.get_collator_class(collator_config.collator_cls)
+        assert collator_cls is not None, f"Collator {collator_cls} not properly registered."
 
-            collator_config = OmegaConf.create(config.pop('collator'))
-            collator_cls = registry.get_collator_class(collator_config.collator_cls)
-            assert collator_cls is not None, f"Collator {collator_cls} not properly registered."
+        collator = collator_cls(
+            processor=processor,
+            **collator_config.config,
+        )
 
-            collator = collator_cls(
-                processor=processor,
-                **collator_config.config,
-            )
+        for evaluator_name in evaluator_config:
+            evaluator_cls = registry.get_evaluator_class(evaluator_name)
 
-            evaluate_dataset = builder.build_dataset()
-
-            if not (isinstance(evaluate_dataset, Dataset) or isinstance(evaluate_dataset, DatasetDict)):
-                raise TypeError(f"Expected `evaluate_dataset` to be of type `datasets.Dataset`, "
-                                f"or `datasets.DatasetDict` but got {type(evaluate_dataset)} instead.")
-
+            if not evaluator_cls:
+                logger.error(f"Evaluator {evaluator_name} not registered.")
+                raise ValueError(f"Evaluator {evaluator_name} not registered.")
             container.add(
                 evaluator=evaluator_cls(
                     model=model,
-                    evaluate_dataset=evaluate_dataset,
-                    dataset_name=builder.name,
                     data_collator=collator,
-                    **config
+                    **base_config
                 )
             )
-
+        logger.info("Evaluator container successfully built.")
         return container
 
 
@@ -178,7 +126,6 @@ class MultiDatasetEvaluateTaskWithPretrainedModel(MultiDatasetEvaluateTask, Task
             self,
             model_config: Optional[Dict] = None
     ) -> PreTrainedModel:
-
         """
         Builds and returns a pretrained model for evaluation. Optionally applies LoRA configurations.
 
@@ -199,15 +146,6 @@ class MultiDatasetEvaluateTaskWithPretrainedModel(MultiDatasetEvaluateTask, Task
         model = model_cls.from_pretrained(**model_config.config)
 
         return model.cuda().eval()
-
-    def build_datasets(
-            self,
-            dataset_config: Optional[Dict] = None
-    ) -> Dict[str, BuilderType]:
-        return MultiDatasetEvaluateTask.build_datasets(
-            self,
-            dataset_config=dataset_config,
-        )
 
     def build_processor(
             self,
@@ -259,15 +197,6 @@ class MultiDatasetEvaluateTaskWithCustomModel(MultiDatasetEvaluateTask, TaskWith
         model = model_cls.from_pretrained(**model_config.config)
 
         return model.cuda().eval()
-
-    def build_datasets(
-            self,
-            dataset_config: Optional[Dict] = None
-    ) -> Dict[str, BuilderType]:
-        return MultiDatasetEvaluateTask.build_datasets(
-            self,
-            dataset_config=dataset_config,
-        )
 
     def build_processor(
             self,

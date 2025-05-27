@@ -8,8 +8,10 @@ import torch
 import torch.backends.cudnn as cudnn
 
 from src import (
-    EvaluateConfig, setup_logger, setup_task, now, load_yml, get_rank, init_distributed_mode
+    EvaluateConfig, setup_logger, now, load_yml, get_rank, init_distributed_mode
 )
+
+from src.tasks import setup_task
 
 # Initialize the logger
 logger = logging.getLogger(__name__)

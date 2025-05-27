@@ -40,7 +40,7 @@ from torchvision.datasets.utils import (
     extract_archive,
 )
 
-import dist_utils
+import src.utils.dist_utils as dist_utils
 
 
 def neg_clip_loss(similarity: torch.Tensor) -> torch.Tensor:

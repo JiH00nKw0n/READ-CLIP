@@ -14,7 +14,6 @@ logger = logging.get_logger(__name__)
 CollatorType = Type[BaseCollator]
 
 __all__ = [
-    "AROEvaluator",
     "CrepeEvaluator",
     "SugarCrepeEvaluator",
     "SugarCrepePPEvaluator",

@@ -1,10 +1,8 @@
 from src.runners.base import BaseTrainer, BaseEvaluator
 from src.runners.evaluator import (
-    RetrievalEvaluator,
-    AROEvaluator,
-    VLCEvaluator,
     CrepeEvaluator,
-    SVOEvaluator,
+    ValseEvaluator,
+    WhatsUpEvaluator,
     SugarCrepeEvaluator,
     WinogroundEvaluator,
     SugarCrepePPEvaluator,
@@ -12,5 +10,5 @@ from src.runners.evaluator import (
 from src.runners.trainer import (
     RandomSamplerTrainer,
     NegCLIPRandomSamplerTrainer,
-    NegCLIPRandomSamplerWithMultiLossTrainer
+    ReadCLIPTrainer
 )

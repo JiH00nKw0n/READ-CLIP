@@ -1,17 +1,11 @@
 from src.collators.base import BaseCollator
 from src.collators.collator import (
-    COCONegCLIPWithImageURLCollator,
     ImageCollator,
-    ImageURLCollator,
-    ImageURLCollatorForEvaluation,
-    COCONegCLIPImageURLCollatorWithTokenizer,
+    COCOImageCollatorWithT5Tokenizer,
 )
 
 __all__ = [
     "BaseCollator",
-    "COCONegCLIPWithImageURLCollator",
     "ImageCollator",
-    "ImageURLCollator",
-    "ImageURLCollatorForEvaluation",
-    "COCONegCLIPImageURLCollatorWithTokenizer",
+    "COCOImageCollatorWithT5Tokenizer"
 ]

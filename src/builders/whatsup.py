@@ -30,7 +30,6 @@ class WhatsUpBuilder(BaseBuilder):
             path="Mayfull/whats_up_vlms",
             trust_remote_code=True,
             split=self.split,
-            token=str(os.getenv("HF_TOKEN"))
         )
 
         return dataset
