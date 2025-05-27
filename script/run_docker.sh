@@ -80,12 +80,10 @@ mkdir -p data output logs
 
 # Determine which command to run in container
 if [[ "$MODE" == "train" ]]; then
-    [ -z "$CONFIG_PATH" ] && CONFIG_PATH="config/train_read_clip.yaml"
-    DOCKER_CMD="source /venv/bin/activate && bash setup.sh && chmod +x scripts/train.sh && python train.py --cfg-path $CONFIG_PATH"
+    DOCKER_CMD="source /venv/bin/activate && chmod +x scripts/train.sh && bash scripts/train.sh"
     [ ! -z "$WANDB_KEY" ] && DOCKER_CMD="$DOCKER_CMD --wandb-key $WANDB_KEY"
 elif [[ "$MODE" == "eval" ]]; then
-    [ -z "$CONFIG_PATH" ] && CONFIG_PATH="config/eval_read_clip.yaml"
-    DOCKER_CMD="source /venv/bin/activate && bash setup.sh && python evaluate.py --cfg-path $CONFIG_PATH"
+    DOCKER_CMD="source /venv/bin/activate && chmod +x scripts/eval.sh && bash scripts/eval.sh"
 else
     DOCKER_CMD="bash"
 fi
