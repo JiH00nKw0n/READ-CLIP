@@ -1,7 +1,6 @@
 export HF_DATASETS_CACHE="../.cache"
 export HF_HOME="../.cache"
 export LOG_DIR="../.log"
-export WANDB_KEY="3314a9f18c06914b9c333abc68130f93f2cb1a23"
 
 DEVICES=0
 NUM_TRAINERS=1
