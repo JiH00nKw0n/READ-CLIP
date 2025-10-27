@@ -1,9 +1,11 @@
+# NeurIPS 2025 Poster
+
 # READ-CLIP 🏹📚
 
 **REconstruction and Alignment of text Descriptions for Compositional Reasoning in CLIP**
 
-[![Paper](https://img.shields.io/badge/Paper-PDF-red)](add_paper_link_here)
-[![Project Page](https://img.shields.io/badge/Project-Page-blue)](add_demo_link_here)
+[![Paper](https://img.shields.io/badge/Paper-PDF-red)](https://arxiv.org/abs/2510.16540)
+[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://neurips.cc/virtual/2025/poster/119758)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Made with PyTorch](https://img.shields.io/badge/Made%20with-PyTorch-lightgrey?logo=pytorch)](https://pytorch.org)
 
@@ -166,4 +168,4 @@ Released under the **MIT License**—see [`LICENSE`](LICENSE).
 
 ---
 
-<sub>Last updated · 2025‑05‑18</sub>
+<sub>Last updated · 2025‑10‑27</sub>
