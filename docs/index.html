@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>READ-CLIP: Enhancing Compositional Reasoning in CLIP via Reconstruction and Alignment of Text Descriptions</title>
+
+  <!-- SEO -->
+  <meta name="description" content="READ-CLIP improves compositional reasoning in CLIP by reconstructing and aligning text descriptions. A frozen text decoder and a sentence-level alignment objective set a new state of the art on SugarCrepe++, WhatsUp, CREPE, VALSE, and SugarCrepe. NeurIPS 2025." />
+  <meta name="keywords" content="compositional reasoning, CLIP, text encoder, vision-language model, contrastive learning, SugarCrepe++, WhatsUp, CREPE, VALSE, SugarCrepe, READ-CLIP, NeurIPS 2025" />
+  <meta name="author" content="Jihoon Kwon, Kyle Min, Jy-yong Sohn" />
+  <link rel="canonical" href="https://jih00nkw0n.github.io/READ-CLIP/" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="READ-CLIP — Enhancing Compositional Reasoning in CLIP" />
+  <meta property="og:description" content="A frozen text decoder + sentence-level alignment that unlocks state-of-the-art compositional reasoning in CLIP. Benchmarks: SugarCrepe++, WhatsUp, CREPE, VALSE, SugarCrepe. NeurIPS 2025." />
+  <meta property="og:url" content="https://jih00nkw0n.github.io/READ-CLIP/" />
+  <meta property="og:image" content="https://jih00nkw0n.github.io/READ-CLIP/static/teaser.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="READ-CLIP — Enhancing Compositional Reasoning in CLIP" />
+  <meta name="twitter:description" content="Reconstruction + alignment of text descriptions for compositional reasoning in CLIP. NeurIPS 2025." />
+  <meta name="twitter:image" content="https://jih00nkw0n.github.io/READ-CLIP/static/teaser.png" />
+
+  <style>
+    :root {
+      --fg: #1a1a1a;
+      --muted: #5f6671;
+      --bg: #ffffff;
+      --soft: #f5f6f8;
+      --line: #e6e8ec;
+      --accent: #b3261e;
+      --accent-soft: #fdeceb;
+      --link: #1763c9;
+      --max: 880px;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.65;
+      font-size: 17px;
+    }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 22px; }
+
+    /* Header */
+    header { padding: 64px 0 36px; text-align: center; border-bottom: 1px solid var(--line); }
+    .venue {
+      display: inline-block; font-size: 14px; font-weight: 600; letter-spacing: .04em;
+      color: var(--accent); background: var(--accent-soft);
+      padding: 5px 13px; border-radius: 999px; margin-bottom: 22px;
+    }
+    h1 { font-size: 33px; line-height: 1.25; margin: 0 0 8px; font-weight: 750; letter-spacing: -0.01em; }
+    h1 .name { color: var(--accent); }
+    .subtitle { color: var(--muted); font-size: 17px; margin: 0 0 26px; }
+    .authors { font-size: 18px; margin: 6px 0 4px; }
+    .authors a { color: var(--fg); font-weight: 600; }
+    .affil { color: var(--muted); font-size: 15px; margin-bottom: 26px; }
+
+    /* Buttons */
+    .links { display: flex; flex-wrap: wrap; gap: 11px; justify-content: center; margin-top: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #1a1a1a; color: #fff; font-size: 15px; font-weight: 600;
+      padding: 10px 18px; border-radius: 999px; transition: opacity .15s;
+    }
+    .btn:hover { opacity: .82; text-decoration: none; }
+    .btn .ic { font-size: 16px; line-height: 1; }
+
+    /* Sections */
+    section { padding: 40px 0; border-bottom: 1px solid var(--line); }
+    h2 { font-size: 24px; margin: 0 0 18px; font-weight: 700; letter-spacing: -0.01em; }
+    h3 { font-size: 18px; margin: 26px 0 8px; font-weight: 650; }
+    p { margin: 0 0 16px; }
+    .lead { font-size: 18px; }
+
+    /* Teaser placeholder */
+    .figure { margin: 8px 0 4px; }
+    .placeholder {
+      border: 1.5px dashed var(--line); border-radius: 12px; background: var(--soft);
+      color: var(--muted); text-align: center; padding: 46px 20px; font-size: 14.5px;
+    }
+    .caption { color: var(--muted); font-size: 14.5px; text-align: center; margin-top: 10px; }
+
+    /* Method cards */
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+    .card { border: 1px solid var(--line); border-radius: 12px; padding: 20px 20px; background: var(--bg); }
+    .card h3 { margin-top: 0; color: var(--accent); }
+
+    /* Table */
+    .scroll { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 15.5px; margin-top: 6px; }
+    th, td { padding: 9px 12px; text-align: center; border-bottom: 1px solid var(--line); }
+    th:first-child, td:first-child { text-align: left; }
+    thead th { border-bottom: 2px solid #d4d7dd; font-weight: 700; }
+    tbody tr:last-child td { border-top: 2px solid #d4d7dd; font-weight: 700; }
+    td.best { color: var(--accent); font-weight: 700; }
+    .tnote { color: var(--muted); font-size: 14px; margin-top: 10px; }
+
+    /* Code / bibtex */
+    pre {
+      background: #0f1217; color: #e7eaf0; border-radius: 12px;
+      padding: 18px 18px; overflow-x: auto; font-size: 13.5px; line-height: 1.55;
+      font-family: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    code { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+    .copy {
+      float: right; font-size: 13px; color: var(--muted); cursor: pointer;
+      border: 1px solid var(--line); border-radius: 7px; padding: 3px 9px; background: var(--bg);
+    }
+    .copy:hover { color: var(--fg); }
+
+    footer { padding: 30px 0 56px; text-align: center; color: var(--muted); font-size: 14px; }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 26px; }
+      .cards { grid-template-columns: 1fr; }
+      body { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="wrap">
+      <div class="venue">NeurIPS 2025</div>
+      <h1>Enhancing Compositional Reasoning in CLIP via<br />Reconstruction and Alignment of Text Descriptions</h1>
+      <p class="subtitle"><span class="name">READ-CLIP</span> &middot; REconstruction and Alignment of text Descriptions</p>
+
+      <p class="authors">
+        <a href="https://github.com/JiH00nKw0n">Jihoon Kwon</a><sup>1</sup> &nbsp;
+        Kyle Min<sup>2</sup> &nbsp;
+        Jy-yong Sohn<sup>3</sup>
+      </p>
+      <p class="affil"><sup>1</sup>Seoul National University &nbsp;&middot;&nbsp; <sup>2</sup>Oracle &nbsp;&middot;&nbsp; <sup>3</sup>Yonsei University &nbsp;<span style="font-size:13px">(&dagger; corresponding author)</span></p>
+
+      <div class="links">
+        <a class="btn" href="https://arxiv.org/abs/2510.16540"><span class="ic">&#128240;</span> Paper</a>
+        <a class="btn" href="https://openreview.net/forum?id=6uKIm4bfEe"><span class="ic">&#9997;</span> OpenReview</a>
+        <a class="btn" href="https://github.com/JiH00nKw0n/READ-CLIP"><span class="ic">&#128187;</span> Code</a>
+        <a class="btn" href="https://huggingface.co/Mayfull/READ-CLIP"><span class="ic">&#129303;</span> Model</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section>
+      <div class="figure">
+        <div class="placeholder">
+          [ teaser figure ] &mdash; drop <code>docs/static/teaser.png</code> here<br />
+          (method overview / main result)
+        </div>
+        <p class="caption">READ adds a token-level reconstruction objective and a sentence-level alignment objective on top of CLIP's contrastive loss.</p>
+      </div>
+    </section>
+
+    <section id="abstract">
+      <h2>Abstract</h2>
+      <p class="lead">
+        Vision&ndash;language models trained with standard contrastive objectives often behave like a bag of words:
+        they attend to individual tokens rather than the relationships between them, and struggle with
+        <strong>compositional reasoning</strong>. We propose <strong>READ</strong>
+        (<em>REconstruction and Alignment of text Descriptions</em>), a lightweight fine-tuning recipe that augments the
+        contrastive loss with two auxiliary objectives: a <strong>token-level reconstruction</strong> objective, in which a
+        frozen text decoder reconstructs related captions from the CLIP text embedding, and a
+        <strong>sentence-level alignment</strong> objective that pulls paraphrases together in the embedding space.
+        The two objectives are complementary&mdash;reconstruction captures word relationships within a caption, while
+        alignment keeps representations consistent across paraphrases with different wording. Applied to CLIP (and to
+        variants such as NegCLIP and FSC-CLIP), READ sets a new state of the art across five compositional reasoning
+        benchmarks: <strong>SugarCrepe++</strong>, <strong>WhatsUp</strong>, <strong>CREPE</strong>,
+        <strong>VALSE</strong>, and <strong>SugarCrepe</strong>.
+      </p>
+    </section>
+
+    <section id="method">
+      <h2>Method</h2>
+      <p>
+        READ keeps CLIP's image&ndash;text contrastive loss and adds two <strong>training-only</strong> objectives on the
+        text side. At inference, READ-CLIP is a drop-in <code>CLIPModel</code>&mdash;no decoder, no extra parameters, and the
+        same compute as the original CLIP.
+      </p>
+      <div class="cards">
+        <div class="card">
+          <h3>Token-level reconstruction</h3>
+          <p>A <strong>frozen</strong> T5 decoder (<code>t5-v1_1-large</code>) reconstructs related captions from the CLIP
+          text embedding, forcing the embedding to retain word-relationship information rather than a bag of tokens.</p>
+        </div>
+        <div class="card">
+          <h3>Sentence-level alignment</h3>
+          <p>Paraphrases of the same caption are pulled together in the embedding space, making the text encoder robust to
+          surface wording and improving consistency across rephrasings.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="results">
+      <h2>Results</h2>
+      <p>Compositional reasoning accuracy with a ViT-B/32 backbone, compared against strong baselines.</p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Benchmark</th><th>READ-CLIP</th><th>NegCLIP</th><th>FSC-CLIP</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>WhatsUp</td><td class="best">43.9</td><td>42.4</td><td>39.8</td></tr>
+            <tr><td>VALSE</td><td class="best">76.2</td><td>73.7</td><td>74.4</td></tr>
+            <tr><td>CREPE</td><td>41.5</td><td>30.5</td><td class="best">42.5</td></tr>
+            <tr><td>SugarCrepe</td><td class="best">87.0</td><td>83.6</td><td>85.2</td></tr>
+            <tr><td>SugarCrepe++ (ITT)</td><td class="best">69.8</td><td>65.0</td><td>67.9</td></tr>
+            <tr><td>SugarCrepe++ (TOT)</td><td class="best">66.2</td><td>62.5</td><td>64.4</td></tr>
+            <tr><td>Average</td><td class="best">64.1</td><td>59.6</td><td>62.4</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tnote">See the <a href="https://arxiv.org/abs/2510.16540">paper</a> for the full set of baselines and ablations.</p>
+    </section>
+
+    <section id="usage">
+      <h2>Usage</h2>
+      <p>The checkpoint loads directly with <code>transformers</code> as a standard <code>CLIPModel</code>:</p>
+      <pre><button class="copy" onclick="copyCode(this)">copy</button><code>import torch
+from transformers import CLIPModel, CLIPProcessor
+
+model = CLIPModel.from_pretrained("Mayfull/READ-CLIP")
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
+inputs = processor(text=["a photo of a cat", "a photo of a dog"],
+                   images=image, return_tensors="pt", padding=True)
+with torch.no_grad():
+    probs = model(**inputs).logits_per_image.softmax(dim=-1)</code></pre>
+    </section>
+
+    <section id="citation">
+      <h2>Citation</h2>
+      <pre><button class="copy" onclick="copyCode(this)">copy</button><code>@inproceedings{kwon2026enhancing,
+  title={Enhancing Compositional Reasoning in {CLIP} via Reconstruction and Alignment of Text Descriptions},
+  author={Jihoon Kwon and Kyle Min and Jy-yong Sohn},
+  booktitle={The Thirty-ninth Annual Conference on Neural Information Processing Systems},
+  year={2026},
+  url={https://openreview.net/forum?id=6uKIm4bfEe}
+}</code></pre>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>READ-CLIP &middot; NeurIPS 2025 &middot;
+        <a href="https://arxiv.org/abs/2510.16540">arXiv</a> &middot;
+        <a href="https://github.com/JiH00nKw0n/READ-CLIP">GitHub</a> &middot;
+        <a href="https://huggingface.co/Mayfull/READ-CLIP">Hugging Face</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      var code = btn.parentElement.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(function () {
+        var t = btn.innerText; btn.innerText = 'copied'; setTimeout(function () { btn.innerText = t; }, 1200);
+      });
+    }
+  </script>
+</body>
+</html>
