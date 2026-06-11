@@ -1,11 +1,11 @@
-# NeurIPS 2025 Poster
-
-# READ-CLIP 🏹📚
+# READ-CLIP
 
 **REconstruction and Alignment of text Descriptions for Compositional Reasoning in CLIP**
 
 [![Paper](https://img.shields.io/badge/Paper-PDF-red)](https://arxiv.org/abs/2510.16540)
-[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://neurips.cc/virtual/2025/poster/119758)
+[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://jih00nkw0n.github.io/READ-CLIP/)
+[![OpenReview](https://img.shields.io/badge/OpenReview-NeurIPS%202025-green)](https://openreview.net/forum?id=6uKIm4bfEe)
+[![Model](https://img.shields.io/badge/Hugging%20Face-Model-orange)](https://huggingface.co/Mayfull/READ-CLIP)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Made with PyTorch](https://img.shields.io/badge/Made%20with-PyTorch-lightgrey?logo=pytorch)](https://pytorch.org)
 
@@ -15,18 +15,25 @@ reasoning.
 Trained on only **100 k MS-COCO samples**, READ-CLIP (ViT-B/32) tops five standard benchmarks, beating strong baselines
 such as NegCLIP and FSC-CLIP by up to **4.5 pp**.
 
+At inference time, READ-CLIP is a drop-in `transformers.CLIPModel`: **no decoder, no extra inference module, and the
+same CLIP-style image-text scoring API**.
+
+![READ-CLIP overview](docs/static/teaser.png)
+
 ---
 
 ## Table of Contents
 
 1. [Quick Start](#quick-start-sample-inference)
-2. [Installation & Usage (Docker Recommended)](#installation--usage-docker-recommended)
-3. [Training](#advanced-entering-a-shell-inside-docker)
-4. [Experiments & Results](#experiments--results)
-5. [Reproducing the Paper](#reproducing-the-paper)
-6. [Pre-trained Checkpoints](#pre-trained-checkpoints)
-7. [Expected Compute & Determinism](#expected-compute--determinism)
-8. [License](#license)
+2. [Why READ-CLIP?](#why-read-clip)
+3. [Installation & Usage (Docker Recommended)](#installation--usage-docker-recommended)
+4. [Training](#advanced-entering-a-shell-inside-docker)
+5. [Experiments & Results](#experiments--results)
+6. [Reproducing the Paper](#reproducing-the-paper)
+7. [Pre-trained Checkpoints](#pre-trained-checkpoints)
+8. [Expected Compute & Determinism](#expected-compute--determinism)
+9. [Citation](#citation)
+10. [License](#license)
 
 ---
 
@@ -37,9 +44,41 @@ such as NegCLIP and FSC-CLIP by up to **4.5 pp**.
 conda create -n readclip python=3.10 -y && conda activate readclip
 pip install -r requirements.txt
 
-# 3. run zero-shot inference
+# 2. rank a positive caption against a compositionally wrong caption
 python example.py
 ```
+
+Expected output:
+
+```text
+Device: cuda
+Image: http://images.cocodataset.org/val2014/COCO_val2014_000000391895.jpg
+
+Ranked captions:
+1. positive | score=...
+   A man with a red helmet is riding a small moped on a dirt road.
+2. negative | score=...
+   A small moped with a red helmet is riding a man on a dirt road.
+```
+
+---
+
+## Why READ-CLIP?
+
+READ-CLIP is designed for researchers who need a compositional CLIP model without changing the deployment path:
+
+| Method | Main signal | Extra inference cost | What READ-CLIP adds |
+|--------|-------------|----------------------|---------------------|
+| NegCLIP | Rule-based hard negatives | No | Stronger text-side compositional encoding |
+| FSC-CLIP | Token-patch calibration | No | Complementary reconstruction/alignment losses |
+| TripletCLIP | Synthetic negative images and captions | No | Lightweight 100 k COCO fine-tuning instead of large pretraining |
+| **READ-CLIP** | Text reconstruction + paraphrase alignment | **No** | Drop-in CLIP model with SOTA average accuracy |
+
+Use READ-CLIP when you want:
+
+- A Hugging Face `CLIPModel` checkpoint for compositional image-text scoring.
+- A fine-tuning recipe that targets the CLIP text encoder bottleneck.
+- Reproducible results on SugarCrepe, SugarCrepe++, WhatsUp, CREPE, and VALSE.
 
 ---
 
@@ -61,7 +100,7 @@ docker build -t read-clip .
 <summary><strong>Step 2. Training</strong></summary>
 
 ```bash
-bash run_docker.sh --train --wandb-key YOUR-WANDB-KEY
+bash script/run_docker.sh --train --wandb-key YOUR-WANDB-KEY
 ```
 
 - All necessary data, output, and logs directories will be mounted for persistence.
@@ -73,7 +112,7 @@ bash run_docker.sh --train --wandb-key YOUR-WANDB-KEY
 <summary><strong>Step 3. Evaluation</strong></summary>
 
 ```bash
-bash run_docker.sh --eval
+bash script/run_docker.sh --eval
 ```
 
 </details>
@@ -85,7 +124,7 @@ bash run_docker.sh --eval
 If you want to run custom scripts or debug:
 
 ```bash
-bash run_docker.sh
+bash script/run_docker.sh
 ```
 
 Then, inside the container:
@@ -100,11 +139,11 @@ python train.py --cfg-path config/train_read_clip.yaml
 ---
 
 > **Tip:**  
-> For convenient mode switching (`train`/`eval`/`shell`), use the provided [run_docker.sh](./run_docker.sh) launcher:
+> For convenient mode switching (`train`/`eval`/`shell`), use the provided [run_docker.sh](./script/run_docker.sh) launcher:
 > ```bash
-> bash run_docker.sh --train --wandb-key YOUR-WANDB-KEY      # for training
-> bash run_docker.sh --eval                                  # for evaluation
-> bash run_docker.sh                                         # just get a shell
+> bash script/run_docker.sh --train --wandb-key YOUR-WANDB-KEY      # for training
+> bash script/run_docker.sh --eval                                  # for evaluation
+> bash script/run_docker.sh                                         # just get a shell
 > ```
 
 ---
@@ -125,11 +164,11 @@ Key hyper-parameters (defined in the YAML):
 ## Reproducing the Paper
 
 > ```bash
-> bash run_docker.sh --train --wandb-key YOUR-WANDB-KEY      # for training
+> bash script/run_docker.sh --train --wandb-key YOUR-WANDB-KEY      # for training
 > ```
 
 ```bash
-> bash run_docker.sh --eval
+bash script/run_docker.sh --eval
 ```
 
 | Benchmark          | Metric | READ-CLIP | NegCLIP | FSC-CLIP |
@@ -152,6 +191,15 @@ Numbers reproduce Table 1 in the paper.
 |--------------------|---------------------------------------------------------|
 | READ-CLIP ViT-B/32 | [Checkpoint](https://huggingface.co/Mayfull/READ-CLIP). |
 
+The checkpoint can be loaded directly with:
+
+```python
+from transformers import CLIPModel, CLIPProcessor
+
+model = CLIPModel.from_pretrained("Mayfull/READ-CLIP")
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+```
+
 ---
 
 ## Expected Compute & Determinism
@@ -162,10 +210,25 @@ Numbers reproduce Table 1 in the paper.
 
 ---
 
+## Citation
+
+If READ-CLIP is useful for your research, please cite:
+
+```bibtex
+@inproceedings{kwon2025readclip,
+  title = {Enhancing Compositional Reasoning in CLIP via Reconstruction and Alignment of Text Descriptions},
+  author = {Kwon, Jihoon and Min, Kyle and Sohn, Jy-yong},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year = {2025}
+}
+```
+
+---
+
 ## License
 
 Released under the **MIT License**—see [`LICENSE`](LICENSE).
 
 ---
 
-<sub>Last updated · 2025‑10‑27</sub>
+<sub>Last updated · 2026-06-11</sub>
