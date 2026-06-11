@@ -80,8 +80,9 @@
     p { margin: 0 0 16px; }
     .lead { font-size: 18px; }
 
-    /* Teaser placeholder */
+    /* Figures */
     .figure { margin: 8px 0 4px; }
+    .figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
     .placeholder {
       border: 1.5px dashed var(--line); border-radius: 12px; background: var(--soft);
       color: var(--muted); text-align: center; padding: 46px 20px; font-size: 14.5px;
@@ -153,11 +154,8 @@
 
     <section>
       <div class="figure">
-        <div class="placeholder">
-          [ teaser figure ] &mdash; drop <code>docs/static/teaser.png</code> here<br />
-          (method overview / main result)
-        </div>
-        <p class="caption">READ adds a token-level reconstruction objective and a sentence-level alignment objective on top of CLIP's contrastive loss.</p>
+        <img src="static/teaser.png" alt="READ-CLIP method overview and a radar chart comparing READ-CLIP against CLIP, NegCLIP, CE-CLIP, and FSC-CLIP on WhatsUp, SugarCrepe, SugarCrepe++ (ITT), SugarCrepe++ (TOT), VALSE, and CREPE." />
+        <p class="caption"><strong>Left:</strong> READ adds a token-level reconstruction objective (via a frozen text decoder) and a sentence-level alignment objective on top of CLIP's image&ndash;text contrastive loss. <strong>Right:</strong> READ-CLIP sets a new state of the art across five compositional reasoning benchmarks.</p>
       </div>
     </section>
 
@@ -186,6 +184,10 @@
         text side. At inference, READ-CLIP is a drop-in <code>CLIPModel</code>&mdash;no decoder, no extra parameters, and the
         same compute as the original CLIP.
       </p>
+      <div class="figure" style="margin: 6px 0 24px;">
+        <img src="static/methods.png" alt="The two READ objectives. (1) Token-level reconstruction: a linear projector maps the CLIP text embedding into a frozen text decoder that reconstructs a paraphrased caption. (2) Sentence-level alignment: paraphrased captions are aligned with their originals in the embedding space." />
+        <p class="caption"><strong>(1) Token-level reconstruction:</strong> a linear projector feeds the text embedding into a frozen decoder that reconstructs a paraphrased caption. <strong>(2) Sentence-level alignment:</strong> paraphrases are aligned with their original captions in the embedding space.</p>
+      </div>
       <div class="cards">
         <div class="card">
           <h3>Token-level reconstruction</h3>
